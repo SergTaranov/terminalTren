@@ -1,0 +1,91 @@
+{
+  "id": "adv-cron",
+  "title": "Планировщик cron",
+  "level": "advanced",
+  "theory": [
+    {
+      "title": "Что такое cron",
+      "body": "cron — демон, запускающий команды по расписанию. Задания хранятся в **crontab** (cron table) каждого пользователя.\n\nОсновные команды:\n- `crontab -l` — показать мои задания\n- `crontab файл` — установить задания из файла\n- `crontab -r` — удалить все задания\n- `crontab -e` — редактировать (в тренажёре не используется)"
+    },
+    {
+      "title": "Формат строки расписания",
+      "body": "Каждая строка — пять полей времени и команда:\n\n```\nмин час день_месяца месяц день_недели команда\n0   3   *           *      *             /usr/bin/backup.sh\n```\n\n- `*` — любое значение\n- `*/5` в поле минут — каждые 5 минут\n- `0 3 * * *` — ежедневно в 03:00\n- `30 4 1 * *` — 1-го числа каждого месяца в 04:30\n- `0 9-17 * * 1-5` — часы 9..17, дни 1..5 (будни)"
+    },
+    {
+      "title": "Как устанавливают задания",
+      "body": "Обычно задание пишут в файл и загружают его:\n\n```\necho '0 3 * * * /usr/bin/backup.sh' > mycron\ncrontab mycron       # установить\ncrontab -l           # проверить\ncrontab -r           # убрать всё\n```\n\nСтроки с # в файле — комментарии, cron их игнорирует."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Запишите задание в файл mycron: резервная копия ежедневно в 03:00 (строка: 0 3 * * * /usr/bin/backup.sh).",
+      "setup": null,
+      "checks": [
+        { "type": "fs_content_contains", "path": "/home/user/mycron", "value": "0 3 * * * /usr/bin/backup.sh" }
+      ],
+      "hints": ["echo '0 3 * * * /usr/bin/backup.sh' > mycron", "Кавычки нужны, чтобы * не раскрылся shell-ом"],
+      "solution": "echo '0 3 * * * /usr/bin/backup.sh' > mycron"
+    },
+    {
+      "id": "ex2",
+      "task": "Установите задания из файла mycron в crontab и проверьте их списком.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/mycron", "content": "0 3 * * * /usr/bin/backup.sh\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*crontab\\s+mycron\\s*$" },
+        { "type": "cmd_used", "value": "^\\s*crontab\\s+-l\\s*$" },
+        { "type": "output_contains", "value": "backup.sh" }
+      ],
+      "hints": ["crontab mycron", "crontab -l"],
+      "solution": "crontab mycron && crontab -l"
+    },
+    {
+      "id": "ex3",
+      "task": "Настройте задание на каждые 15 минут: строка */15 * * * * /usr/bin/check.sh — запишите в файл every15 и установите.",
+      "setup": null,
+      "checks": [
+        { "type": "fs_content_contains", "path": "/home/user/every15", "value": "*/15 * * * * /usr/bin/check.sh" },
+        { "type": "cmd_used", "value": "^\\s*crontab\\s+every15\\s*$" }
+      ],
+      "hints": ["*/15 в поле минут означает «каждые 15 минут»", "echo '*/15 * * * * /usr/bin/check.sh' > every15", "crontab every15"],
+      "solution": "echo '*/15 * * * * /usr/bin/check.sh' > every15 && crontab every15"
+    },
+    {
+      "id": "ex4",
+      "task": "Установите готовый файл jobs.cron и убедитесь, что crontab -l показывает обе задачи.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/jobs.cron", "content": "# ежедневный бэкап\n0 3 * * * /usr/bin/backup.sh\n# почистить tmp\n0 4 * * 0 /usr/bin/cleantmp.sh\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*crontab\\s+jobs\\.cron" },
+        { "type": "output_contains", "value": "cleantmp.sh" },
+        { "type": "output_contains", "value": "backup.sh" }
+      ],
+      "hints": ["crontab jobs.cron", "crontab -l"],
+      "solution": "crontab jobs.cron && crontab -l"
+    },
+    {
+      "id": "ex5",
+      "task": "Полный цикл: установите задания из jobs.cron, посмотрите их, затем удалите весь crontab.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/jobs.cron", "content": "0 3 * * * /usr/bin/backup.sh\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*crontab\\s+jobs\\.cron" },
+        { "type": "cmd_used", "value": "^\\s*crontab\\s+-l\\s*$" },
+        { "type": "cmd_used", "value": "^\\s*crontab\\s+-r\\s*$" },
+        { "type": "output_contains", "value": "backup.sh" }
+      ],
+      "hints": ["crontab jobs.cron", "crontab -l", "crontab -r"],
+      "solution": "crontab jobs.cron && crontab -l && crontab -r"
+    }
+  ]
+}

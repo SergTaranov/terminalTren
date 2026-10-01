@@ -1,0 +1,102 @@
+{
+  "id": "adv-awk",
+  "title": "awk: обработка таблиц по полям",
+  "level": "advanced",
+  "theory": [
+    {
+      "title": "Поля и записи",
+      "body": "awk делит каждую строку на **поля** по пробелам (или другому разделителю):\n\n- `$1`, `$2`, ... — поля по номеру\n- `$NF` — последнее поле (NF — число полей)\n- `$0` — вся строка\n- `NR` — номер текущей строки\n\n```\nawk '{print $1}' file      # первое поле каждой строки\nawk '{print $NF}' file     # последнее поле\nawk '{print $1, $3}' file  # первое и третье через пробел\n```"
+    },
+    {
+      "title": "Свой разделитель: -F",
+      "body": "Для CSV-подобных данных укажите разделитель ключом `-F`:\n\n```\nawk -F: '{print $1}' /etc/passwd   # имена пользователей\nawk -F';' '{print $2}' data.csv\n```\n\nВнимание: между -F и символом пробел допустим, а сам символ обычно берут в кавычки."
+    },
+    {
+      "title": "Шаблоны и блоки",
+      "body": "Программа awk — набор правил `ШАБЛОН { ДЕЙСТВИЕ }`. Действие выполняется для строк, подошедших под шаблон:\n\n```\nawk '$3 > 100' data           # фильтр: третье поле больше 100\nawk '/error/ {print $2}' log  # строки с error\nawk 'NR > 1' data             # пропустить заголовок\n```\n\nСпециальные блоки `BEGIN` и `END` выполняются до и после всех строк:\n\n```\nawk '{s+=$2} END {print s}' data   # сумма второй колонки\nawk 'END {print NR}' file          # число строк\n```"
+    },
+    {
+      "title": "printf для аккуратного вывода",
+      "body": "Внутри awk работает printf с форматной строкой:\n\n```\nawk '{printf \"%s: %d\\n\", $1, $2}' data\n```\n\n%s — строка, %d — целое, \\n — перевод строки. Без \\n всё склеится в одну строку!"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Из staff.txt выведите только имена сотрудников (первая колонка).",
+      "setup": {
+        "files": [
+          { "path": "/home/user/staff.txt", "content": "анна бухгалтер 120000\nборис инженер 150000\nвера аналитик 135000\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*awk\\s+'\\{print \\$1\\}'" },
+        { "type": "output_contains", "value": "борис" }
+      ],
+      "hints": ["print $1 печатает первое поле", "awk '{print $1}' staff.txt"],
+      "solution": "awk '{print $1}' staff.txt"
+    },
+    {
+      "id": "ex2",
+      "task": "Выведите имена пользователей из /etc/passwd (первое поле до двоеточия).",
+      "setup": {
+        "files": [
+          { "path": "/etc/passwd", "content": "root:x:0:0:root:/root:/bin/bash\nuser:x:1000:1000:User:/home/user:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*awk\\s+-F:?\\s*'\\{print \\$1\\}'\\s+/etc/passwd" },
+        { "type": "output_contains", "value": "daemon" }
+      ],
+      "hints": ["Разделитель задаётся -F", "awk -F: '{print $1}' /etc/passwd"],
+      "solution": "awk -F: '{print $1}' /etc/passwd"
+    },
+    {
+      "id": "ex3",
+      "task": "Выведите строки staff.txt, где зарплата (третье поле) больше 130000.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/staff.txt", "content": "анна бухгалтер 120000\nборис инженер 150000\nвера аналитик 135000\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "\\$3\\s*>\\s*130000" },
+        { "type": "output_contains", "value": "борис инженер" },
+        { "type": "output_contains", "value": "вера аналитик" }
+      ],
+      "hints": ["Условие без блока печатает строки целиком", "awk '$3 > 130000' staff.txt"],
+      "solution": "awk '$3 > 130000' staff.txt"
+    },
+    {
+      "id": "ex4",
+      "task": "Посчитайте суммарную зарплату: накопите сумму третьего поля в переменной и напечатайте её в блоке END.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/staff.txt", "content": "анна бухгалтер 120000\nборис инженер 150000\nвера аналитик 135000\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "END" },
+        { "type": "output_contains", "value": "405000" }
+      ],
+      "hints": ["Переменные заводятся присваиванием: s+=$3 накапливает сумму", "awk '{s+=$3} END {print s}' staff.txt"],
+      "solution": "awk '{s+=$3} END {print s}' staff.txt"
+    },
+    {
+      "id": "ex5",
+      "task": "Напечатайте пары «имя=должность» из staff.txt, используя printf внутри awk (формат \"%s=%s\\n\").",
+      "setup": {
+        "files": [
+          { "path": "/home/user/staff.txt", "content": "анна бухгалтер\nборис инженер\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "printf" },
+        { "type": "output_contains", "value": "анна=бухгалтер" },
+        { "type": "output_contains", "value": "борис=инженер" }
+      ],
+      "hints": ["printf \"%s=%s\\n\", $1, $2", "awk '{printf \"%s=%s\\n\", $1, $2}' staff.txt"],
+      "solution": "awk '{printf \"%s=%s\\n\", $1, $2}' staff.txt"
+    }
+  ]
+}

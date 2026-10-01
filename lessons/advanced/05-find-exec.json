@@ -1,0 +1,97 @@
+{
+  "id": "adv-find-exec",
+  "title": "find с условиями и -exec",
+  "level": "advanced",
+  "theory": [
+    {
+      "title": "Комбинирование условий",
+      "body": "Условия find объединяются по И (И = просто перечисление):\n\n```\nfind . -type f -name \"*.log\"      # файлы И имя *.log\nfind /var -type f -size +10M      # большие файлы\nfind . -type d -name \"test*\"      # каталоги по шаблону\n```\n\nПорядок не важен, но тип стоит указывать первым — поиск быстрее."
+    },
+    {
+      "title": "Время изменения: -mtime",
+      "body": "`-mtime N` отбирает файлы по возрасту в днях:\n\n- `-mtime 3` — изменённые ровно 3 дня назад\n- `-mtime -3` — свежее 3 дней\n- `-mtime +3` — старше 3 дней\n\n```\nfind . -mtime +30 -name \"*.log\"   # старые логи\n```\n\nКлассическая задача «найти и почистить старое»."
+    },
+    {
+      "title": "-exec: действие над каждым",
+      "body": "`-exec КОМАНДА {} \\;` запускает команду для каждого найденного пути, подставляя его вместо `{}`:\n\n```\nfind . -name \"*.tmp\" -exec rm {} \\;\nfind . -type f -name \"*.txt\" -exec wc -l {} \\;\n```\n\nТочка с запятой должна быть экранирована (`\\;`), чтобы shell не съел её сам."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Найдите в дереве проекта только обычные ФАЙЛЫ с расширением .log (два условия сразу).",
+      "setup": {
+        "dirs": [{ "path": "/home/user/project/logs" }],
+        "files": [
+          { "path": "/home/user/project/run.log", "content": "запуск\n" },
+          { "path": "/home/user/project/logs/old.log", "content": "старый\n" },
+          { "path": "/home/user/project/logs/archive", "content": "это файл-архив без расширения\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*find\\b.*-type\\s+f.*-name.*\\.log|find\\b.*-name.*\\.log.*-type\\s+f" },
+        { "type": "output_contains", "value": "old.log" },
+        { "type": "output_contains", "value": "run.log" }
+      ],
+      "hints": ["find . -type f -name \"*.log\""],
+      "solution": "find . -type f -name \"*.log\""
+    },
+    {
+      "id": "ex2",
+      "task": "Найдите файлы старше 7 дней в каталоге archive (дерево уже создано).",
+      "setup": {
+        "dirs": [{ "path": "/home/user/archive" }],
+        "files": [
+          { "path": "/home/user/archive/old1.txt", "content": "старый\n", "mtime_days_ago": 20 },
+          { "path": "/home/user/archive/old2.txt", "content": "старый\n", "mtime_days_ago": 45 },
+          { "path": "/home/user/archive/fresh.txt", "content": "свежий\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*find\\b.*-mtime\\s+\\+7" },
+        { "type": "output_contains", "value": "old1.txt" },
+        { "type": "output_contains", "value": "old2.txt" }
+      ],
+      "hints": ["Плюс означает «старше N дней»", "find archive -mtime +7"],
+      "solution": "find archive -mtime +7"
+    },
+    {
+      "id": "ex3",
+      "task": "Счистите временные файлы: найдите все *.tmp в дереве и удалите их одним find с -exec.",
+      "setup": {
+        "dirs": [{ "path": "/home/user/work/tmp/deep" }],
+        "files": [
+          { "path": "/home/user/work/junk1.tmp", "content": "x\n" },
+          { "path": "/home/user/work/tmp/junk2.tmp", "content": "y\n" },
+          { "path": "/home/user/work/tmp/deep/junk3.tmp", "content": "z\n" },
+          { "path": "/home/user/work/important.txt", "content": "не трогать\n" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_absent", "path": "/home/user/work/junk1.tmp" },
+        { "type": "fs_absent", "path": "/home/user/work/tmp/junk2.tmp" },
+        { "type": "fs_absent", "path": "/home/user/work/tmp/deep/junk3.tmp" },
+        { "type": "fs_exists", "path": "/home/user/work/important.txt" }
+      ],
+      "hints": ["find . -name \"*.tmp\" -exec rm {} \\;", "Точку с запятой экранируйте: \\;"],
+      "solution": "find . -name \"*.tmp\" -exec rm {} \\;"
+    },
+    {
+      "id": "ex4",
+      "task": "Посчитайте строки в каждом .txt файле каталога docs: find с -exec wc -l.",
+      "setup": {
+        "dirs": [{ "path": "/home/user/docs" }],
+        "files": [
+          { "path": "/home/user/docs/a.txt", "content": "1\n2\n3\n" },
+          { "path": "/home/user/docs/b.txt", "content": "1\n2\n3\n4\n5\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "-exec\\s+'?(wc|-c).*wc|find\\b.*-exec.*wc" },
+        { "type": "output_contains", "value": "a.txt" }
+      ],
+      "hints": ["find docs -name \"*.txt\" -exec wc -l {} \\;"],
+      "solution": "find docs -name \"*.txt\" -exec wc -l {} \\;"
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "id": "adv-scripts",
+  "title": "Bash-скрипты: автоматизация",
+  "level": "advanced",
+  "theory": [
+    {
+      "title": "Скелет скрипта",
+      "body": "Скрипт — текстовый файл с командами. Первая строка **shebang** указывает интерпретатор:\n\n```\n#!/bin/bash\necho \"Привет из скрипта\"\n```\n\nЧтобы запустить, нужны права исполнения и путь:\n\n```\nchmod +x script.sh\n./script.sh\n```\n\nБез chmod получите Permission denied."
+    },
+    {
+      "title": "Аргументы и переменные",
+      "body": "Аргументы скрипта: `$1`, `$2`, ... `$#` — их количество:\n\n```\n#!/bin/bash\necho \"Привет, $1!\"\n```\n\nЗапуск: `./greet.sh Мир` → Привет, Мир!\n\nПрисваивание без пробелов вокруг =: `NAME=значение`. Числа: `n=$((n+1))`."
+    },
+    {
+      "title": "Условия: if и test",
+      "body": "```\n#!/bin/bash\nif [ \"$1\" = \"start\" ]; then\n    echo запускаем\nelif [ -f config ]; then\n    echo есть конфиг\nelse\n    echo непонятно\nfi\n```\n\nПроверки файлов: `-f` файл, `-d` каталог, `-e` существует, `-x` исполняемый.\nЧисла: `-eq -ne -lt -le -gt -ge`. Строки: `=`, `!=`, `-z` (пустая).\n\nПробелы вокруг `[` и `]` обязательны!"
+    },
+    {
+      "title": "Циклы и функции",
+      "body": "```\nfor i in 1 2 3\ndo\n    echo шаг $i\ndone\n\nwhile [ $n -lt 5 ]\ndo\n    n=$((n+1))\ndone\n\nпривет() {\n    echo \"hi, $1\"\n}\nпривет Анна\n```"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Создайте скрипт hello.sh с содержимым «#!/bin/bash» и «echo Привет из скрипта», сделайте исполняемым и запустите.",
+      "setup": null,
+      "checks": [
+        { "type": "fs_exists", "path": "/home/user/hello.sh" },
+        { "type": "fs_content_contains", "path": "/home/user/hello.sh", "value": "#!/bin/bash" },
+        { "type": "fs_perm", "path": "/home/user/hello.sh", "value": "755" },
+        { "type": "cmd_used", "value": "^\\s*\\./hello\\.sh\\s*$" },
+        { "type": "output_contains", "value": "Привет из скрипта" }
+      ],
+      "hints": [
+        "printf '#!/bin/bash\\necho Привет из скрипта\\n' > hello.sh",
+        "chmod +x hello.sh",
+        "./hello.sh"
+      ],
+      "solution": "printf '#!/bin/bash\\necho Привет из скрипта\\n' > hello.sh && chmod +x hello.sh && ./hello.sh"
+    },
+    {
+      "id": "ex2",
+      "task": "Скрипт greet.sh должен приветствовать по имени из первого аргумента: строка echo \"Привет, $1!\". Запустите его с аргументом Анна.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/greet.sh", "content": "#!/bin/bash\necho \"Привет, $1!\"\n", "perms": "755" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*\\./greet\\.sh\\s+Анна\\s*$" },
+        { "type": "output_contains", "value": "Привет, Анна!" }
+      ],
+      "hints": ["Скрипт уже готов и исполняем", "./greet.sh Анна"],
+      "solution": "./greet.sh Анна"
+    },
+    {
+      "id": "ex3",
+      "task": "Запустите check.sh с аргументом /etc и посмотрите, что он ответит (скрипт проверяет существование каталога через if [ -d \"$1\" ]).",
+      "setup": {
+        "files": [
+          { "path": "/home/user/check.sh", "content": "#!/bin/bash\nif [ -d \"$1\" ]; then\necho \"$1 — это каталог\"\nelse\necho \"$1 не каталог\"\nfi\n", "perms": "755" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*\\./check\\.sh\\s+/etc\\s*$" },
+        { "type": "output_contains", "value": "это каталог" }
+      ],
+      "hints": ["Просто запустите: ./check.sh /etc"],
+      "solution": "./check.sh /etc"
+    },
+    {
+      "id": "ex4",
+      "task": "Скрипт count.sh (уже готов) считает от 1 до 5 циклом for. Запустите его.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/count.sh", "content": "#!/bin/bash\nfor i in 1 2 3 4 5\ndo\necho \"шаг $i\"\ndone\n", "perms": "755" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*\\./count\\.sh\\s*$" },
+        { "type": "output_contains", "value": "шаг 5" }
+      ],
+      "hints": ["./count.sh"],
+      "solution": "./count.sh"
+    },
+    {
+      "id": "ex5",
+      "task": "Создайте скрипт backup.sh: строка tar -czf backup.tar.gz docs (упрощённый бэкап), сделайте исполняемым, запустите и убедитесь, что архив появился.",
+      "setup": {
+        "dirs": [{ "path": "/home/user/docs" }],
+        "files": [
+          { "path": "/home/user/docs/doc.txt", "content": "данные\n" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_exists", "path": "/home/user/backup.sh" },
+        { "type": "cmd_used", "value": "^\\s*\\./backup\\.sh\\s*$" },
+        { "type": "fs_exists", "path": "/home/user/backup.tar.gz" }
+      ],
+      "hints": [
+        "printf '#!/bin/bash\\ntar -czf backup.tar.gz docs\\n' > backup.sh",
+        "chmod +x backup.sh",
+        "./backup.sh",
+        "Проверить: ls или tar -tzf backup.tar.gz"
+      ],
+      "solution": "printf '#!/bin/bash\\ntar -czf backup.tar.gz docs\\n' > backup.sh && chmod +x backup.sh && ./backup.sh"
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "id": "basic-misc",
+  "title": "Полезные мелочи: echo, date, history, alias",
+  "level": "basic",
+  "theory": [
+    {
+      "title": "echo и переменные",
+      "body": "`echo` печатает текст. С `$ИМЯ` подставляется значение переменной окружения:\n\n```\necho \"Привет, мир\"\necho \"Домашний каталог: $HOME\"\necho \"Пользователь: $USER\"\n```\n\nСвои переменные: `export NAME=значение` — теперь `echo $NAME` покажет его в любой команде."
+    },
+    {
+      "title": "whoami, uname, date",
+      "body": "- `whoami` — имя текущего пользователя\n- `uname -r` — версия ядра, `uname -a` — всё о системе\n- `date` — дата и время; с форматом: `date +%Y-%m-%d`\n- `df -h` — свободное место на дисках\n- `du -sh каталог` — сколько места занимает каталог\n- `free -h` — память"
+    },
+    {
+      "title": "history: учиться на своих командах",
+      "body": "`history` выводит пронумерованный список введённых команд. Стрелки ↑/↓ листают историю прямо в строке ввода.\n\nНайти в истории: `history | grep ssh`."
+    },
+    {
+      "title": "alias: короткие имена",
+      "body": "`alias` создаёт сокращение для длинной команды:\n\n```\nalias ll='ls -la'\nalias gs='git status'\nalias        # список всех алиасов\n```\n\nТеперь `ll` работает как `ls -la`. Чтобы алиас жил постоянно, его записывают в файл `~/.bashrc` и перечитывают его: `source ~/.bashrc`.\n\nУдалить алиас: `unalias имя`."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Выведите значение переменной окружения HOME (используя echo и подстановку $HOME).",
+      "setup": null,
+      "checks": [
+        { "type": "cmd_used", "value": "echo.*\\$HOME|echo.*\\$\\{HOME\\}" },
+        { "type": "output_contains", "value": "/home/user" }
+      ],
+      "hints": ["echo $HOME"],
+      "solution": "echo $HOME"
+    },
+    {
+      "id": "ex2",
+      "task": "Создайте переменную COURSE со значением linux (командой export), затем выведите её значение.",
+      "setup": null,
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*export\\s+COURSE=linux" },
+        { "type": "cmd_used", "value": "echo.*\\$COURSE" },
+        { "type": "output_contains", "value": "linux" }
+      ],
+      "hints": ["export COURSE=linux", "Затем: echo $COURSE"],
+      "solution": "export COURSE=linux && echo $COURSE"
+    },
+    {
+      "id": "ex3",
+      "task": "Выведите текущую дату в формате ГГГГ-ММ-ДД, используя формат date +%Y-%m-%d.",
+      "setup": null,
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*date\\s+\\+%Y-%m-%d\\s*$" }
+      ],
+      "hints": ["date +%Y-%m-%d"],
+      "solution": "date +%Y-%m-%d"
+    },
+    {
+      "id": "ex4",
+      "task": "Создайте алиас ll для команды ls -la и проверьте, что он работает.",
+      "setup": {
+        "files": [{ "path": "/home/user/test.txt", "content": "файл\n" }]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*alias\\s+ll=.ls\\s+-la.\\s*$" },
+        { "type": "cmd_used", "value": "^\\s*ll\\s*$" },
+        { "type": "output_contains", "value": "test.txt" }
+      ],
+      "hints": ["alias ll='ls -la'", "Затем просто выполните: ll"],
+      "solution": "alias ll='ls -la' && ll"
+    },
+    {
+      "id": "ex5",
+      "task": "Добавьте алиас в ~/.bashrc (дописыванием >>), перечитайте его командой source и проверьте, что ll работает.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/.bashrc", "content": "# мои настройки\n" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_content_contains", "path": "/home/user/.bashrc", "value": "alias ll=" },
+        { "type": "cmd_used", "value": "^\\s*source\\s+~/.bashrc\\s*$|^\\s*\\.\\s+~/.bashrc\\s*$" },
+        { "type": "cmd_used", "value": "^\\s*ll\\s*$" }
+      ],
+      "hints": [
+        "echo \"alias ll='ls -la'\" >> ~/.bashrc",
+        "source ~/.bashrc",
+        "Затем выполните: ll"
+      ],
+      "solution": "echo \"alias ll='ls -la'\" >> ~/.bashrc && source ~/.bashrc && ll"
+    }
+  ]
+}

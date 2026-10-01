@@ -1,0 +1,97 @@
+{
+  "id": "basic-files",
+  "title": "Создание, копирование, перемещение и удаление",
+  "level": "basic",
+  "theory": [
+    {
+      "title": "Создание: touch и mkdir",
+      "body": "`touch файл` создаёт **пустой файл** (или обновляет время изменения существующего):\n\n```\ntouch notes.txt\ntouch a.txt b.txt c.txt   # сразу несколько\n```\n\n`mkdir` (make directory) создаёт каталог, а ключ `-p` — сразу всю цепочку вложенных:\n\n```\nmkdir photos\nmkdir -p projects/web/src   # создаст и projects, и web, и src\n```"
+    },
+    {
+      "title": "Копирование: cp",
+      "body": "`cp источник назначение` копирует файл:\n\n```\ncp report.txt backup.txt     # копия в текущем каталоге\ncp report.txt /tmp/          # копия в /tmp\ncp *.txt documents/          # все .txt в каталог\n```\n\nКаталоги копируются только с ключом `-r` (recursive):\n\n```\ncp -r project project-copy\n```"
+    },
+    {
+      "title": "Перемещение и переименование: mv",
+      "body": "`mv` (move) перемещает файл, а заодно и **переименовывает** — в Linux это одно и то же:\n\n```\nmv old.txt new.txt          # переименование\nmv photo.jpg pictures/      # перемещение в каталог\nmv *.log logs/              # переместить все логи\n```"
+    },
+    {
+      "title": "Удаление: rm",
+      "body": "`rm файл` удаляет файл **безвозвратно** — корзины в терминале нет!\n\n```\nrm temp.txt\nrm file1.txt file2.txt\nrm -r oldproject           # каталог со всем содержимым (-r обязателен)\n```\n\nПустой каталог можно удалить и `rmdir` — он откажется работать, если каталог не пуст. Это защита от случайностей."
+    },
+    {
+      "title": "Правило безопасности",
+      "body": "Будьте внимательны с `rm -r` и подстановками:\n\n```\nrm -r каталог      # ок\nrm -rf /          # НИКОГДА не делайте так в реальной системе\n```\n\nПрежде чем удалять по шаблону `rm *.txt`, проверьте, что попадёт под шаблон: выполните `ls *.txt`."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Создайте пустой файл с именем notes.txt в текущем каталоге.",
+      "setup": null,
+      "checks": [{ "type": "fs_exists", "path": "/home/user/notes.txt" }],
+      "hints": ["Команда touch создаёт пустые файлы"],
+      "solution": "touch notes.txt"
+    },
+    {
+      "id": "ex2",
+      "task": "Создайте цепочку вложенных каталогов projects/web/img одной командой.",
+      "setup": null,
+      "checks": [
+        { "type": "fs_exists", "path": "/home/user/projects/web/img" }
+      ],
+      "hints": ["mkdir с ключом -p создаёт всех родителей сразу"],
+      "solution": "mkdir -p projects/web/img"
+    },
+    {
+      "id": "ex3",
+      "task": "Скопируйте report.txt в файл report-backup.txt и убедитесь, что копия содержит те же данные.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/report.txt", "content": "Квартальный отчёт\nСтрока 2 данных\nСтрока 3 данных\n" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_exists", "path": "/home/user/report-backup.txt" },
+        { "type": "fs_content_contains", "path": "/home/user/report-backup.txt", "value": "Квартальный отчёт" }
+      ],
+      "hints": ["cp источник назначение", "cp report.txt report-backup.txt"],
+      "solution": "cp report.txt report-backup.txt"
+    },
+    {
+      "id": "ex4",
+      "task": "Переименуйте draft.txt в final.txt.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/draft.txt", "content": "черновик текста\n" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_exists", "path": "/home/user/final.txt" },
+        { "type": "fs_absent", "path": "/home/user/draft.txt" }
+      ],
+      "hints": ["Переименование — это перемещение", "mv draft.txt final.txt"],
+      "solution": "mv draft.txt final.txt"
+    },
+    {
+      "id": "ex5",
+      "task": "Каталог temp больше не нужен — удалите его вместе со всем содержимым одной командой.",
+      "setup": {
+        "dirs": [
+          { "path": "/home/user/temp/cache" },
+          { "path": "/home/user/keep" }
+        ],
+        "files": [
+          { "path": "/home/user/temp/junk1.txt", "content": "мусор\n" },
+          { "path": "/home/user/temp/cache/junk2.bin", "content": "данные\n" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_absent", "path": "/home/user/temp" },
+        { "type": "fs_exists", "path": "/home/user/keep" }
+      ],
+      "hints": ["Каталог удаляется rm с ключом рекурсии", "rm -r temp"],
+      "solution": "rm -r temp"
+    }
+  ]
+}

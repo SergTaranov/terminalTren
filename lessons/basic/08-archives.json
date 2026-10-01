@@ -1,0 +1,85 @@
+{
+  "id": "basic-archives",
+  "title": "Архивы: tar и gzip",
+  "level": "basic",
+  "theory": [
+    {
+      "title": "tar — «склейка» файлов",
+      "body": "`tar` собирает несколько файлов и каталогов в один архив:\n\n```\ntar -cf archive.tar файлы...    # создать (c)\ntar -tf archive.tar             # показать содержимое (t)\ntar -xf archive.tar             # распаковать (x)\n```\n\nКлюч `-f` обязателен — он задаёт **имя файла** архива и идёт с ним рядом: `-f archive.tar`."
+    },
+    {
+      "title": "Сжатие: -z и gzip",
+      "body": "tar только склеивает, а сжимает **gzip**. Ключ `-z` включает сжатие прямо в tar:\n\n```\ntar -czf backup.tar.gz docs/     # создать сжатый архив\ntar -tzf backup.tar.gz           # список файлов\ntar -xzf backup.tar.gz           # распаковать\n```\n\nИмена принято давать `.tar.gz` (архив tar, сжатый gzip).\n\nОтдельный gzip тоже работает: `gzip file` создаст `file.gz` и удалит исходник; `gunzip file.gz` вернёт как было."
+    },
+    {
+      "title": "Привычный формат ключей",
+      "body": "Чаще всего ключи пишут слитно, и это нормальная практика:\n\n```\ntar -czf site.tar.gz /var/www/site\ntar -xzf site.tar.gz\n```\n\nЗапомните тройки:\n- **czf** — создать сжатый архив\n- **tzf** — посмотреть, что внутри\n- **xzf** — распаковать\n\nКлюч `-v` (verbose) печатает имена файлов в процессе."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Создайте сжатый архив project.tar.gz из каталога project.",
+      "setup": {
+        "dirs": [{ "path": "/home/user/project/src" }],
+        "files": [
+          { "path": "/home/user/project/index.html", "content": "<h1>Привет</h1>\n" },
+          { "path": "/home/user/project/src/app.js", "content": "console.log(1);\n" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_exists", "path": "/home/user/project.tar.gz" }
+      ],
+      "hints": ["Ключи czf: create, gzip, file", "tar -czf project.tar.gz project"],
+      "solution": "tar -czf project.tar.gz project"
+    },
+    {
+      "id": "ex2",
+      "task": "Покажите список файлов внутри архива project.tar, не распаковывая его.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/project.tar", "content": "[{\"path\":\"project/index.html\",\"type\":\"f\",\"perms\":420,\"owner\":\"user\",\"content\":\"<h1>Привет</h1>\\n\"},{\"path\":\"project/src\",\"type\":\"d\",\"perms\":493,\"owner\":\"user\"},{\"path\":\"project/src/app.js\",\"type\":\"f\",\"perms\":420,\"owner\":\"user\",\"content\":\"console.log(1);\\n\"}]" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*tar\\s+(-[a-zA-Z]*t[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*t)" },
+        { "type": "output_contains", "value": "app.js" }
+      ],
+      "hints": ["t — list, нужен -f имя_архива", "tar -tf project.tar"],
+      "solution": "tar -tf project.tar"
+    },
+    {
+      "id": "ex3",
+      "task": "Распакуйте архив project.tar в текущий каталог и убедитесь, что появился файл project/index.html.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/project.tar", "content": "[{\"path\":\"project/index.html\",\"type\":\"f\",\"perms\":420,\"owner\":\"user\",\"content\":\"<h1>Привет</h1>\\n\"},{\"path\":\"project/src\",\"type\":\"d\",\"perms\":493,\"owner\":\"user\"},{\"path\":\"project/src/app.js\",\"type\":\"f\",\"perms\":420,\"owner\":\"user\",\"content\":\"console.log(1);\\n\"}]" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_exists", "path": "/home/user/project/index.html" },
+        { "type": "fs_content_contains", "path": "/home/user/project/index.html", "value": "Привет" },
+        { "type": "fs_exists", "path": "/home/user/project/src/app.js" }
+      ],
+      "hints": ["x — extract, нужен -f имя_архива", "tar -xf project.tar"],
+      "solution": "tar -xf project.tar"
+    },
+    {
+      "id": "ex4",
+      "task": "Сожмите файл data.csv отдельным gzip-ом (получится data.csv.gz), а затем верните обратно через gunzip.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/data.csv", "content": "id;name\n1;Анна\n2;Борис\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*gzip\\s+.*data\\.csv" },
+        { "type": "cmd_used", "value": "^\\s*gunzip\\s+.*data\\.csv\\.gz" },
+        { "type": "fs_exists", "path": "/home/user/data.csv" },
+        { "type": "fs_absent", "path": "/home/user/data.csv.gz" }
+      ],
+      "hints": ["gzip data.csv, затем gunzip data.csv.gz", "gzip удаляет исходный файл, gunzip возвращает"],
+      "solution": "gzip data.csv && gunzip data.csv.gz"
+    }
+  ]
+}

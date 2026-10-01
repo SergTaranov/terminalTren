@@ -1,0 +1,109 @@
+{
+  "id": "adv-systemd",
+  "title": "Службы systemd: systemctl и journalctl",
+  "level": "advanced",
+  "theory": [
+    {
+      "title": "Юниты и systemctl",
+      "body": "systemd управляет службами (юнитами). Основной инструмент — `systemctl`:\n\n```\nsystemctl status nginx.service   # состояние\nsudo systemctl start nginx       # запустить\nsudo systemctl stop nginx        # остановить\nsudo systemctl restart nginx     # перезапустить\nsystemctl list-units             # все юниты\n```\n\nИмя можно писать с .service или без. Служба бывает active (running), inactive (dead) или failed."
+    },
+    {
+      "title": "Автозапуск: enable/disable",
+      "body": "Запуск службы ≠ автозапуск при загрузке системы:\n\n```\nsystemctl is-enabled nginx\nsudo systemctl enable nginx  # включить автозапуск\nsudo systemctl disable nginx # выключить\n```\n\n`enable` создаёт ссылку юнита в wants-каталоге systemd."
+    },
+    {
+      "title": "Логи: journalctl",
+      "body": "Логи служб собирает journald. Смотрим:\n\n```\njournalctl -u nginx.service        # все логи службы\njournalctl -u nginx -n 20          # последние 20 строк\njournalctl -u nginx -f             # следить в реальном времени\n```\n\nТиповая диагностика: служба не стартует → `systemctl status`, затем `journalctl -u имя -n 50` и читаем ошибку."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Посмотрите состояние службы nginx.service.",
+      "setup": {
+        "units": [
+          { "name": "nginx.service", "desc": "A high performance web server", "active": "active", "enabled": true,
+            "logs": [
+              "Sep 29 09:00:12 trenbox systemd[1]: Starting nginx...",
+              "Sep 29 09:00:12 trenbox nginx[1080]: nginx configured",
+              "Sep 29 09:00:12 trenbox systemd[1]: Started nginx."
+            ] }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*systemctl\\s+status\\s+(nginx\\.service|nginx)\\s*$" },
+        { "type": "output_contains", "value": "active (running)" }
+      ],
+      "hints": ["systemctl status nginx.service"],
+      "solution": "systemctl status nginx.service"
+    },
+    {
+      "id": "ex2",
+      "task": "Служба crond.service в состоянии failed. Перезапустите её (с sudo) и убедитесь через status, что она запустилась.",
+      "setup": {
+        "units": [
+          { "name": "crond.service", "desc": "Command scheduler", "active": "failed", "enabled": true,
+            "logs": [
+              "Sep 30 10:00:01 trenbox systemd[1]: crond.service failed."
+            ] }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*sudo\\s+systemctl\\s+restart\\s+(crond\\.service|crond)\\s*$" },
+        { "type": "cmd_used", "value": "^\\s*(sudo\\s+)?systemctl\\s+status\\s+(crond\\.service|crond)\\s*$" },
+        { "type": "output_contains", "value": "active (running)" }
+      ],
+      "hints": ["sudo systemctl restart crond.service", "systemctl status crond.service"],
+      "solution": "sudo systemctl restart crond.service && systemctl status crond.service"
+    },
+    {
+      "id": "ex3",
+      "task": "Проверьте, активна ли служба ssh.service, короткой командой is-active.",
+      "setup": {
+        "units": [
+          { "name": "ssh.service", "desc": "OpenBSD Secure Shell server", "active": "active", "enabled": true }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*systemctl\\s+is-active\\s+(ssh\\.service|ssh)\\s*$" },
+        { "type": "output_contains", "value": "active" }
+      ],
+      "hints": ["systemctl is-active ssh.service"],
+      "solution": "systemctl is-active ssh.service"
+    },
+    {
+      "id": "ex4",
+      "task": "Посмотрите последние 3 строки логов службы nginx.service (journalctl).",
+      "setup": {
+        "units": [
+          { "name": "nginx.service", "desc": "Web server", "active": "active", "enabled": true,
+            "logs": [
+              "Sep 29 09:00:12 trenbox systemd[1]: Starting nginx...",
+              "Sep 29 09:00:12 trenbox systemd[1]: Started nginx.",
+              "Sep 30 12:00:01 trenbox nginx[1080]: reload complete"
+            ] }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*journalctl\\s+-u\\s+(nginx\\.service|nginx)\\s+.*-n\\s*3|-n\\s*3.*-u" },
+        { "type": "output_contains", "value": "reload complete" }
+      ],
+      "hints": ["journalctl -u nginx.service -n 3"],
+      "solution": "journalctl -u nginx.service -n 3"
+    },
+    {
+      "id": "ex5",
+      "task": "Служба webapp.service не должна стартовать при загрузке: отключите её автозапуск (sudo systemctl disable).",
+      "setup": {
+        "units": [
+          { "name": "webapp.service", "desc": "Our web application", "active": "active", "enabled": true }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*sudo\\s+systemctl\\s+disable\\s+(webapp\\.service|webapp)\\s*$" }
+      ],
+      "hints": ["sudo systemctl disable webapp.service"],
+      "solution": "sudo systemctl disable webapp.service"
+    }
+  ]
+}

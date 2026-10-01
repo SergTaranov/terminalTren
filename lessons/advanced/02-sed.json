@@ -1,0 +1,100 @@
+{
+  "id": "adv-sed",
+  "title": "Потоковый редактор sed",
+  "level": "advanced",
+  "theory": [
+    {
+      "title": "Замена: s/старое/новое/",
+      "body": "Команда `s` заменяет первое вхождение шаблона в каждой строке:\n\n```\nsed 's/кот/пёс/' file\n```\n\nФлаги после последнего разделителя:\n- `g` — **все** вхождения в строке, не только первое\n- `i` — без учёта регистра\n- `2` — только второе вхождение\n\nРазделителем может быть любой символ — удобно, если в шаблоне есть слэши: `sed 's|/usr/local|/opt|'`."
+    },
+    {
+      "title": "Адресация",
+      "body": "Команду можно применять не ко всем строкам:\n\n- `5d` — удалить 5-ю строку\n- `$d` — удалить последнюю\n- `2,5d` — удалить диапазон 2–5\n- `/шаблон/d` — удалить строки с шаблоном\n\n```\nsed '/#комментарий/d' config    # выкинуть комментарии\nsed '1,2d' file                 # выкинуть первые две строки\n```"
+    },
+    {
+      "title": "Печать по условию: -n и p",
+      "body": "По умолчанию sed печатает каждую строку (возможно, изменённую). Флаг `-n` отключает автопечать — тогда печатают только то, что явно попросили командой `p`:\n\n```\nsed -n '/ERROR/p' log    # то же, что grep ERROR\nsed -n '5p' file         # только 5-я строка\n```\n\nИзменить файл на месте (без вывода на экран) — ключ `-i`:\n\n```\nsed -i 's/localhost/127.0.0.1/g' config.conf\n```"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Замените в выводе config.txt все вхождения SERVER1 на web01 (не меняя файл).",
+      "setup": {
+        "files": [
+          { "path": "/home/user/config.txt", "content": "host=SERVER1\nbackup=SERVER2\nmirror=SERVER1\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*sed\\s+['\\\"]s/SERVER1/web01/g['\\\"]" },
+        { "type": "output_contains", "value": "host=web01" },
+        { "type": "fs_content_contains", "path": "/home/user/config.txt", "value": "SERVER1" }
+      ],
+      "hints": ["Замена не должна менять файл — не используйте -i", "Флаг g заменяет все вхождения в строке", "sed 's/SERVER1/web01/g' config.txt"],
+      "solution": "sed 's/SERVER1/web01/g' config.txt"
+    },
+    {
+      "id": "ex2",
+      "task": "Выведите config.txt без строк-комментариев (строки, начинающиеся с #).",
+      "setup": {
+        "files": [
+          { "path": "/home/user/config.txt", "content": "# основной конфиг\nport=8080\n# таймауты\ntimeout=30\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*sed\\s+['\\\"].*\\^#.*d['\\\"]" },
+        { "type": "output_contains", "value": "port=8080" }
+      ],
+      "hints": ["Адрес /шаблон/ + команда d удаляет строки", "Шаблон от начала строки: /^#/d", "sed '/^#/d' config.txt"],
+      "solution": "sed '/^#/d' config.txt"
+    },
+    {
+      "id": "ex3",
+      "task": "Выведите только 3-ю строку файла data.txt (sed -n с командой p).",
+      "setup": {
+        "files": [
+          { "path": "/home/user/data.txt", "content": "первая\nвторая\nтретья\nчетвёртая\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*sed\\s+-n\\s+['\\\"]3p['\\\"]" },
+        { "type": "output_contains", "value": "третья" }
+      ],
+      "hints": ["-n глушит автопечать, p печатает адресованные строки", "sed -n '3p' data.txt"],
+      "solution": "sed -n '3p' data.txt"
+    },
+    {
+      "id": "ex4",
+      "task": "Исправьте файл settings.txt прямо на месте: замените DEBUG=false на DEBUG=true (ключ -i), затем проверьте cat-ом.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/settings.txt", "content": "app=main\nDEBUG=false\nlevel=info\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*sed\\s+-i\\s+['\\\"]s/DEBUG=false/DEBUG=true/['\\\"]" },
+        { "type": "fs_content_contains", "path": "/home/user/settings.txt", "value": "DEBUG=true" },
+        { "type": "fs_content_contains", "path": "/home/user/settings.txt", "value": "level=info" }
+      ],
+      "hints": ["-i пишет результат обратно в файл", "sed -i 's/DEBUG=false/DEBUG=true/' settings.txt"],
+      "solution": "sed -i 's/DEBUG=false/DEBUG=true/' settings.txt"
+    },
+    {
+      "id": "ex5",
+      "task": "Нечувствительная к регистру замена: замените слово Error на ОШИБКА во всех вариантах написания (error, Error, ERROR) во всём файле.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/report.txt", "content": "Error в модуле A\nнет error в модуле B\nERROR критический\nвсё хорошо\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*sed\\s+['\\\"]s/Error/ОШИБКА/(gi|ig)['\\\"]" },
+        { "type": "output_contains", "value": "ОШИБКА в модуле A" },
+        { "type": "output_contains", "value": "нет ОШИБКА в модуле B" },
+        { "type": "output_contains", "value": "ОШИБКА критический" }
+      ],
+      "hints": ["Флаг i делает замену регистронезависимой, g — все вхождения", "sed 's/Error/ОШИБКА/gi' report.txt"],
+      "solution": "sed 's/Error/ОШИБКА/gi' report.txt"
+    }
+  ]
+}

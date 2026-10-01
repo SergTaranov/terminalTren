@@ -1,0 +1,101 @@
+{
+  "id": "adv-text-tools",
+  "title": "cut, tr, sort -k и xargs",
+  "level": "advanced",
+  "theory": [
+    {
+      "title": "cut: вырезать колонки",
+      "body": "`cut -d РАЗДЕЛИТЕЛЬ -f НОМЕРА` извлекает поля:\n\n```\ncut -d: -f1 /etc/passwd     # первое поле до двоеточия\ncut -d, -f1,3 data.csv      # первое и третье\ncut -d, -f2-4 data.csv      # со второго по четвёртое\n```\n\n`cut -c ДИАПАЗОН` режет по позициям символов:\n\n```\ncut -c1-8 access.log        # первые 8 символов каждой строки\n```"
+    },
+    {
+      "title": "tr: перекодировка символов",
+      "body": "`tr` читает только stdin и посимвольно преобразует текст:\n\n```\necho hello | tr a-z A-Z      # HELLO\necho 'a;b' | tr ';' ','      # a,b\ncat file | tr -d '\\r'        # удалить CR (лечение windows-файлов)\n```\n\nДиапазоны пишутся через дефис: a-z, A-Z, 0-9."
+    },
+    {
+      "title": "sort -t -k: сортировка по колонке",
+      "body": "`sort -t РАЗД -k N` сортирует по N-й колонке, `-n` — как числа:\n\n```\nsort -t: -k3 -n /etc/passwd   # по числовому третьему полю\nsort -t, -k2 -r data.csv      # по второй колонке в обратном порядке\n```\n\nЧастотный список слов (классика): `sort file | uniq -c | sort -rn`."
+    },
+    {
+      "title": "xargs: аргументы из конвейера",
+      "body": "`xargs` превращает строки со stdin в аргументы команды:\n\n```\ncat list.txt | xargs rm          # rm с именами из файла\nfind . -name \"*.tmp\" | xargs rm  # удалить найденное\n... | xargs -n 1 команда         # по одному аргументу за вызов\n```\n\nБез команды xargs использует echo."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Выведите имена пользователей из /etc/passwd (первое поле до двоеточия) командой cut.",
+      "setup": {
+        "files": [
+          { "path": "/etc/passwd", "content": "root:x:0:0\nuser:x:1000:1000\ndaemon:x:1:1\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*cut\\s+-d:?\\s+-f\\s*1\\s+/etc/passwd" },
+        { "type": "output_contains", "value": "daemon" }
+      ],
+      "hints": ["cut -d: -f1 /etc/passwd"],
+      "solution": "cut -d: -f1 /etc/passwd"
+    },
+    {
+      "id": "ex2",
+      "task": "Приведите вывод echo к ВЕРХНЕМУ регистру через tr.",
+      "setup": null,
+      "checks": [
+        { "type": "cmd_used", "value": "echo.*\\|\\s*tr\\s+a-z\\s+A-Z|tr\\s+a-z\\s+A-Z" },
+        { "type": "output_contains", "value": "HELLO" }
+      ],
+      "hints": ["tr работает только с конвейером", "echo hello | tr a-z A-Z"],
+      "solution": "echo hello | tr a-z A-Z"
+    },
+    {
+      "id": "ex3",
+      "task": "Отсортируйте sales.csv по числовому значению второй колонки (разделитель — запятая), по возрастанию.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/sales.csv", "content": "январь,300\nфевраль,120\nмарт,450\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*sort\\s+-[a-zA-Z]*t[a-zA-Z]*,.*-k\\s*2.*n|-t,.*-k2n|-t,.*-k\\s*2\\s+-n|sort\\s+-t,\\s+-k\\s*2,?2?n?" },
+        { "type": "output_contains", "value": "февраль,120" }
+      ],
+      "hints": ["-t задаёт разделитель, -k номер колонки, -n числовую сортировку", "sort -t, -k2 -n sales.csv"],
+      "solution": "sort -t, -k2 -n sales.csv"
+    },
+    {
+      "id": "ex4",
+      "task": "Постройте частотный список тегов из tags.txt: посчитайте повторы каждого тега и отсортируйте по убыванию частоты.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/tags.txt", "content": "linux\ndocker\nlinux\nbash\nlinux\ndocker\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "uniq\\s+-c" },
+        { "type": "cmd_used", "value": "sort.*-rn|-rn" },
+        { "type": "output_contains", "value": "3 linux" }
+      ],
+      "hints": ["sort | uniq -c | sort -rn"],
+      "solution": "sort tags.txt | uniq -c | sort -rn"
+    },
+    {
+      "id": "ex5",
+      "task": "Удалите все файлы, перечисленные в списка old-files.txt, одним конвейером cat | xargs rm.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/old-files.txt", "content": "a.tmp\nb.tmp\n" },
+          { "path": "/home/user/a.tmp", "content": "x\n" },
+          { "path": "/home/user/b.tmp", "content": "y\n" },
+          { "path": "/home/user/keep.txt", "content": "нужный\n" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_absent", "path": "/home/user/a.tmp" },
+        { "type": "fs_absent", "path": "/home/user/b.tmp" },
+        { "type": "fs_exists", "path": "/home/user/keep.txt" }
+      ],
+      "hints": ["cat old-files.txt | xargs rm"],
+      "solution": "cat old-files.txt | xargs rm"
+    }
+  ]
+}

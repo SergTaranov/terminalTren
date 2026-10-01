@@ -1,0 +1,94 @@
+{
+  "id": "basic-pipes",
+  "title": "Конвейеры и перенаправление потоков",
+  "level": "basic",
+  "theory": [
+    {
+      "title": "Три потока",
+      "body": "У каждой программы есть:\n- **stdin** (0) — стандартный ввод\n- **stdout** (1) — стандартный вывод, сюда идёт обычный результат\n- **stderr** (2) — стандартный поток ошибок\n\nФилософия Unix: программы читают текст из stdin и пишут текст в stdout. Это позволяет соединять их в конвейеры."
+    },
+    {
+      "title": "Конвейер |",
+      "body": "`|` передаёт stdout одной команды на stdin следующей:\n\n```\nls | wc -l                 # сколько файлов\ncat log | grep error       # отфильтровать\nps aux | grep nginx        # найти процесс\nsort list | uniq           # отсортировать и убрать повторы\n```\n\nКонвейер может быть любой длины: `cmd1 | cmd2 | cmd3 | ...`"
+    },
+    {
+      "title": "Перенаправление в файл",
+      "body": "- `>` — записать stdout в файл (**перезапишет** файл)\n- `>>` — дописать в конец\n- `<` — подать файл на вход команды\n- `2>` — перенаправить stderr (ошибки)\n\n```\necho \"строка\" > file.txt\necho \"ещё\" >> file.txt\nwc -l < file.txt\ncmd 2> errors.log\n```"
+    },
+    {
+      "title": "sort, uniq, tee",
+      "body": "`sort` сортирует строки (`-n` — как числа, `-r` — в обратном порядке, `-u` — без повторов).\n\n`uniq` убирает **соседние** повторы — обычно после sort. Ключ `-c` считает количество повторов:\n\n```\nsort words | uniq -c | sort -rn    # частотный список\n```\n\n`tee файл` пишет и в файл, и на экран одновременно — удобно сохранять вывод и видеть его:\n\n```\nmake 2>&1 | tee build.log\n```"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Запишите строку «первая запись» в файл journal.txt через перенаправление.",
+      "setup": null,
+      "checks": [
+        { "type": "fs_content_contains", "path": "/home/user/journal.txt", "value": "первая запись" }
+      ],
+      "hints": ["echo текст > файл"],
+      "solution": "echo первая запись > journal.txt"
+    },
+    {
+      "id": "ex2",
+      "task": "Допишите строку «вторая запись» в конец journal.txt, не стирая старое содержимое.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/journal.txt", "content": "первая запись\n" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_content_contains", "path": "/home/user/journal.txt", "value": "первая запись" },
+        { "type": "fs_content_contains", "path": "/home/user/journal.txt", "value": "вторая запись" }
+      ],
+      "hints": [">> дописывает, а не перезаписывает"],
+      "solution": "echo вторая запись >> journal.txt"
+    },
+    {
+      "id": "ex3",
+      "task": "Сохраните отсортированный список слов из файла words.txt в файл sorted.txt: отсортируйте cat-вывод через конвейер с перенаправлением.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/words.txt", "content": "груша\nяблоко\nапельсин\nбанан\n" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_content_equals", "path": "/home/user/sorted.txt", "value": "апельсин\nбанан\nгруша\nяблоко" }
+      ],
+      "hints": ["cat words.txt | sort > sorted.txt"],
+      "solution": "cat words.txt | sort > sorted.txt"
+    },
+    {
+      "id": "ex4",
+      "task": "Посчитайте, сколько РАЗНЫХ слов в файле words.txt (с повторами): отберите уникальные строки и посчитайте их конвейером.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/words.txt", "content": "кот\nпёс\nкот\nмышь\nкот\nпёс\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "sort.*\\|.*uniq.*\\|.*wc|uniq.*\\|.*wc" },
+        { "type": "output_contains", "value": "3" }
+      ],
+      "hints": ["sort words.txt | uniq | wc -l", "Уникальных слов три: кот, пёс, мышь"],
+      "solution": "sort words.txt | uniq | wc -l"
+    },
+    {
+      "id": "ex5",
+      "task": "Постройте частотный список: посчитайте повторы слов в words.txt и отсортируйте по убыванию частоты. Результат покажите на экране.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/words.txt", "content": "red\nblue\nred\ngreen\nred\nblue\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "sort.*\\|.*uniq\\s+-c.*\\|.*sort.*-rn|uniq\\s+-c.*\\|.*sort.*-r" },
+        { "type": "output_contains", "value": "3 red" }
+      ],
+      "hints": ["uniq -c считает повторы", "sort -rn сортирует числа по убыванию", "sort words.txt | uniq -c | sort -rn"],
+      "solution": "sort words.txt | uniq -c | sort -rn"
+    }
+  ]
+}

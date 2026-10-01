@@ -1,0 +1,84 @@
+{
+  "id": "adv-network",
+  "title": "Сеть: ping, curl, ss",
+  "level": "advanced",
+  "theory": [
+    {
+      "title": "ping: доступен ли хост",
+      "body": "`ping` шлёт ICMP-пакеты и меряет время ответа:\n\n```\nping -c 3 example.com\n```\n\n`-c N` — отправить N пакетов и завершиться (иначе ping работает бесконечно). В ответе смотрите:\n- `time=12.3 ms` — задержка\n- `0% packet loss` — потери пакетов"
+    },
+    {
+      "title": "curl: HTTP-запросы",
+      "body": "`curl URL` выполняет HTTP-запрос и печатает ответ:\n\n```\ncurl http://example.com        # тело ответа на экран\ncurl -i URL                    # с заголовками\ncurl -o page.html URL          # сохранить в файл\ncurl -s URL | grep title       # тихий режим + конвейер\n```\n\ncurl — швейцарский нож отладки API и веб-серверов."
+    },
+    {
+      "title": "ss: кто слушает порты",
+      "body": "`ss` показывает сокеты (современная замена netstat):\n\n```\nss -tulpn\n```\n\n- `-t` TCP, `-u` UDP\n- `-l` только слушающие\n- `-p` какой процесс\n- `-n` числовые порты\n\nКлассическая диагностика: «почему сайт не поднимается» — а слушает ли вообще что-то порт 80?"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Проверьте доступность example.com тремя пакетами.",
+      "setup": {
+        "web": { "http://example.com": "<html><body>Example</body></html>\n" }
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*ping\\s+-c\\s*3\\s+example\\.com" },
+        { "type": "output_contains", "value": "0% packet loss" }
+      ],
+      "hints": ["ping -c 3 example.com"],
+      "solution": "ping -c 3 example.com"
+    },
+    {
+      "id": "ex2",
+      "task": "Выполните HTTP-запрос к http://example.com и посмотрите ответ.",
+      "setup": {
+        "web": { "http://example.com": "<html>\n<head><title>Пример страницы</title></head>\n<body>Привет!</body>\n</html>\n" }
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*curl\\s+http://example\\.com" },
+        { "type": "output_contains", "value": "<title>" }
+      ],
+      "hints": ["curl http://example.com"],
+      "solution": "curl http://example.com"
+    },
+    {
+      "id": "ex3",
+      "task": "Сохраните ответ http://example.com в файл page.html (curl -o).",
+      "setup": {
+        "web": { "http://example.com": "<html><body>контент</body></html>\n" }
+      },
+      "checks": [
+        { "type": "fs_exists", "path": "/home/user/page.html" },
+        { "type": "fs_content_contains", "path": "/home/user/page.html", "value": "контент" }
+      ],
+      "hints": ["curl -o page.html http://example.com"],
+      "solution": "curl -o page.html http://example.com"
+    },
+    {
+      "id": "ex4",
+      "task": "Конвейер: получите страницу curl-ом и отфильтруйте строки со словом title.",
+      "setup": {
+        "web": { "http://example.com": "<html>\n<head><title>Заголовок</title></head>\n<body>x</body>\n</html>\n" }
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "curl.*\\|.*grep" },
+        { "type": "output_contains", "value": "<title>" }
+      ],
+      "hints": ["curl -s http://example.com | grep title"],
+      "solution": "curl -s http://example.com | grep title"
+    },
+    {
+      "id": "ex5",
+      "task": "Проверьте, какие порты слушает сервер (ss с ключами -t -u -l -p -n в любом порядке) и найдите nginx на порту 80.",
+      "setup": null,
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*ss\\s+-[tulpn]+\\s*$" },
+        { "type": "output_contains", "value": ":80" }
+      ],
+      "hints": ["ss -tulpn"],
+      "solution": "ss -tulpn"
+    }
+  ]
+}

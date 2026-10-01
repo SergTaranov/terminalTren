@@ -1,0 +1,100 @@
+{
+  "id": "adv-regex",
+  "title": "Регулярные выражения и grep -E",
+  "level": "advanced",
+  "theory": [
+    {
+      "title": "Расширенные регулярные выражения",
+      "body": "Ключ `-E` включает расширенный синтаксис (ERE) — без экранирования спецсимволов:\n\n```\ngrep -E 'кот|пёс' file     # ИЛИ\ngrep -E 'o+b' file          # одно или больше «o»\ngrep -E '(ab)+' file        # группа\n```\n\nБез `-E` пришлось бы писать `o\\+b`, `a\\|b`."
+    },
+    {
+      "title": "Якоря и квантификаторы",
+      "body": "- `^` — начало строки, `$` — конец\n- `.` — любой символ\n- `*` — 0+ повторов, `+` — 1+, `?` — 0 или 1\n- `{2,4}` — от 2 до 4 повторов\n- `[abc]` — любой из символов, `[0-9]` — цифра\n\n```\ngrep -E '^2026-' access.log      # строки, начинающиеся с даты\ngrep -E '[0-9]{3}' file          # трёхзначные числа\ngrep -E 'error|fail' app.log     # error ИЛИ fail\n```"
+    },
+    {
+      "title": "Границы слов",
+      "body": "Шаблон `cat` найдёт и «category». Чтобы искать именно слово:\n\n- ключ `-w` — совпадение только целым словом\n- ключ `-i` — без учёта регистра (комбинируется: `-wi`)\n\n```\ngrep -w error log     # error, но не errors\n```"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Найдите в app.log строки, где встречается error ИЛИ fail (расширенным регэкспом, одним вызовом).",
+      "setup": {
+        "files": [
+          { "path": "/home/user/app.log", "content": "info: старт\nerror: сбой диска\nok\nfail: тест 3\nok\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*grep\\s+-[a-zA-Z]*E[a-zA-Z]*\\s+.*(error|fail).*\\|" },
+        { "type": "cmd_used", "value": "(error|fail)\\s*\\||\\|\\s*(error|fail)" },
+        { "type": "output_contains", "value": "сбой диска" },
+        { "type": "output_contains", "value": "тест 3" }
+      ],
+      "hints": ["Ключ -E включает ERE", "Альтернатива — вертикальная черта внутри шаблона", "grep -E 'error|fail' app.log"],
+      "solution": "grep -E 'error|fail' app.log"
+    },
+    {
+      "id": "ex2",
+      "task": "Из access.log выведите только строки, начинающиеся с даты 2026 (шаблон от начала строки: ^2026-).",
+      "setup": {
+        "files": [
+          { "path": "/home/user/access.log", "content": "2026-09-01 GET /\nслужебная строка\n2026-09-02 POST /api\nкэш очищен\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "\\^2026-" },
+        { "type": "output_contains", "value": "POST /api" }
+      ],
+      "hints": ["Якорь ^ означает начало строки", "grep '^2026-' access.log"],
+      "solution": "grep '^2026-' access.log"
+    },
+    {
+      "id": "ex3",
+      "task": "Найдите в inventory.txt строки с трёхзначными количествами: шаблон [0-9]{3}.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/inventory.txt", "content": "болты: 25\nгайки: 120\nшайбы: 7\nподшипники: 340\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "\\[0-9\\]\\{3\\}" },
+        { "type": "output_contains", "value": "гайки" },
+        { "type": "output_contains", "value": "подшипники" }
+      ],
+      "hints": ["{3} — ровно 3 повтора предыдущего элемента", "grep -E '[0-9]{3}' inventory.txt"],
+      "solution": "grep -E '[0-9]{3}' inventory.txt"
+    },
+    {
+      "id": "ex4",
+      "task": "Найдите слово error как целое слово (не errors): используйте -w. В файле есть и error, и errors — на экран должны попасть только строки с отдельным словом error.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/app.log", "content": "случился error номер 1\nзаписали errors в журнал\nerror снова\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*grep\\s+-[a-zA-Z]*w[a-zA-Z]*\\s+error" },
+        { "type": "output_contains", "value": "номер 1" },
+        { "type": "output_not_contains", "value": "записали errors" }
+      ],
+      "hints": ["Ключ -w требует совпадения целого слова", "grep -w error app.log"],
+      "solution": "grep -w error app.log"
+    },
+    {
+      "id": "ex5",
+      "task": "Соберите конвейер: из access.log возьмите строки с POST и посчитайте их количество.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/access.log", "content": "2026-09-01 POST /login\n2026-09-01 GET /\n2026-09-02 POST /api\n2026-09-02 GET /docs\n2026-09-03 POST /upload\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "grep.*POST.*\\|.*wc" },
+        { "type": "output_contains", "value": "3" }
+      ],
+      "hints": ["grep POST access.log | wc -l"],
+      "solution": "grep POST access.log | wc -l"
+    }
+  ]
+}

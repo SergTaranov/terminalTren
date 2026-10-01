@@ -1,0 +1,87 @@
+{
+  "id": "basic-processes",
+  "title": "Процессы: ps и kill",
+  "level": "basic",
+  "theory": [
+    {
+      "title": "Что такое процесс",
+      "body": "Каждая запущенная программа — это **процесс**. У него есть:\n- **PID** — числовой идентификатор\n- владелец (пользователь)\n- потребление CPU и памяти\n- состояние и командная строка\n\nПосмотреть снимок процессов: `ps aux` — все процессы системы. Короткий `ps` покажет только процессы текущего терминала."
+    },
+    {
+      "title": "ps aux и поиск процесса",
+      "body": "```\n$ ps aux | grep nginx\nuser  1080  0.5  1.2 ... nginx: master process\n```\n\nКолонки: USER, PID, %CPU, %MEM, VSZ/RSS (память), STAT, START, TIME, COMMAND.\n\nСтандартный приём — отфильтровать grep-ом: `ps aux | grep имя`."
+    },
+    {
+      "title": "kill: завершение процесса",
+      "body": "`kill PID` посылает процессу сигнал **SIGTERM** — вежливую просьбу завершиться:\n\n```\nkill 1080        # завершить процесс 1080\nkill -9 1080     # SIGKILL — убить принудительно\n```\n\n`-9` используют, когда процесс не реагирует на обычный kill. Сначала пробуют без -9!"
+    },
+    {
+      "title": "top",
+      "body": "`top` показывает процессы в реальном времени, отсортированные по нагрузке на процессор. Это интерактивный монитор; выйти из него в реальной системе — клавишей `q`."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Выведите все процессы (полный формат) и найдите процесс веб-сервера nginx: отфильтруйте вывод ps через grep.",
+      "setup": {
+        "processes": [
+          { "pid": 812, "user": "root", "cmd": "/usr/sbin/sshd -D", "cpu": 0.1, "mem": 0.3 },
+          { "pid": 1080, "user": "root", "cmd": "nginx: master process /usr/sbin/nginx", "cpu": 0.5, "mem": 1.2 },
+          { "pid": 2500, "user": "user", "cmd": "python3 worker.py", "cpu": 2.3, "mem": 3.1 }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "ps\\s+aux.*\\|.*grep|grep.*\\|.*ps" },
+        { "type": "output_contains", "value": "nginx" }
+      ],
+      "hints": ["ps aux | grep nginx"],
+      "solution": "ps aux | grep nginx"
+    },
+    {
+      "id": "ex2",
+      "task": "Процесс python3 worker.py перегружает систему. Завершите его обычным SIGTERM по PID.",
+      "setup": {
+        "processes": [
+          { "pid": 812, "user": "root", "cmd": "/usr/sbin/sshd -D", "cpu": 0.1, "mem": 0.3 },
+          { "pid": 2500, "user": "user", "cmd": "python3 worker.py", "cpu": 2.3, "mem": 3.1 }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*kill\\s+2500\\s*$" }
+      ],
+      "hints": ["Сначала найдите PID: ps aux | grep python", "kill 2500"],
+      "solution": "kill 2500"
+    },
+    {
+      "id": "ex3",
+      "task": "Процесс runaway.sh не реагирует на обычные сигналы. Убейте его принудительно (SIGKILL) по PID 3312.",
+      "setup": {
+        "processes": [
+          { "pid": 3312, "user": "user", "cmd": "./runaway.sh", "cpu": 98.7, "mem": 5.4 }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*kill\\s+-9\\s+3312\\s*$" }
+      ],
+      "hints": ["Флаг -9 посылает SIGKILL", "kill -9 3312"],
+      "solution": "kill -9 3312"
+    },
+    {
+      "id": "ex4",
+      "task": "Посмотрите на монитор процессов top и найдите самый прожорливый до CPU процесс (runaway2.sh).",
+      "setup": {
+        "processes": [
+          { "pid": 4001, "user": "user", "cmd": "runaway2.sh", "cpu": 88.1, "mem": 2.2 },
+          { "pid": 4002, "user": "root", "cmd": "mysqld", "cpu": 3.4, "mem": 8.8 }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*top\\s*$" },
+        { "type": "output_contains", "value": "runaway2.sh" }
+      ],
+      "hints": ["Просто запустите top"],
+      "solution": "top"
+    }
+  ]
+}

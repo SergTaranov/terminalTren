@@ -1,0 +1,85 @@
+{
+  "id": "adv-env-path",
+  "title": "Переменные окружения, PATH и профиль",
+  "level": "advanced",
+  "theory": [
+    {
+      "title": "Окружение",
+      "body": "Переменные окружения — настройки, которые видят все запускаемые программы:\n\n```\necho $PATH        # где искать программы\necho $HOME        # домашний каталог\necho $USER        # имя пользователя\nenv               # все переменные разом\nenv | grep PATH   # найти нужную\n```\n\nСоздать/изменить: `export ИМЯ=значение`. Без export переменная видна только текущему shell, с export — и дочерним процессам."
+    },
+    {
+      "title": "PATH: где shell ищет команды",
+      "body": "Когда вы вводите `ls`, shell перебирает каталоги из `$PATH` по порядку:\n\n```\n/usr/local/bin:/usr/bin:/bin\n```\n\nДвоеточие — разделитель. Добавить свой каталог со скриптами:\n\n```\nexport PATH=$PATH:/home/user/bin\n```\n\nПроверить, что именно запустится: `which команда` покажет полный путь."
+    },
+    {
+      "title": "Профиль: ~/.bashrc",
+      "body": "Переменные и алиасы, заданные вручную, умирают с терминалом. Чтобы настройки жили постоянно, их дописывают в файл `~/.bashrc` — он выполняется при каждом запуске shell:\n\n```\necho 'export EDITOR=nano' >> ~/.bashrc\nsource ~/.bashrc    # перечитать прямо сейчас\n```\n\n`source файл` выполняет скрипт в ТЕКУЩЕМ shell (переменные сохраняются), в отличие от запуска `bash файл`."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Выведите содержимое переменной PATH (через echo).",
+      "setup": null,
+      "checks": [
+        { "type": "cmd_used", "value": "echo.*\\$PATH" },
+        { "type": "output_contains", "value": "/usr/bin" }
+      ],
+      "hints": ["echo $PATH"],
+      "solution": "echo $PATH"
+    },
+    {
+      "id": "ex2",
+      "task": "Добавьте каталог /home/user/bin в PATH (допишите к текущему значению через : ).",
+      "setup": null,
+      "checks": [
+        { "type": "cmd_used", "value": "export\\s+PATH=.*\\$PATH.*bin|export\\s+PATH=\\$PATH" },
+        { "type": "cmd_used", "value": "echo.*\\$PATH" }
+      ],
+      "hints": ["export PATH=$PATH:/home/user/bin", "Затем проверьте echo $PATH"],
+      "solution": "export PATH=$PATH:/home/user/bin && echo $PATH"
+    },
+    {
+      "id": "ex3",
+      "task": "Узнайте, откуда запустится команда python3 (which).",
+      "setup": null,
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*which\\s+python3\\s*$" },
+        { "type": "output_contains", "value": "/usr/bin/python3" }
+      ],
+      "hints": ["which python3"],
+      "solution": "which python3"
+    },
+    {
+      "id": "ex4",
+      "task": "Сделайте постоянный алиас: допишите в ~/.bashrc строку alias up='cd ..' (через >>), затем примените файл командой source.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/.bashrc", "content": "# профиль\n" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_content_contains", "path": "/home/user/.bashrc", "value": "alias up='cd ..'" },
+        { "type": "cmd_used", "value": "^\\s*source\\s+~?/?\\.?bashrc|source\\s+~/.bashrc|source\\s+~/.bashrc\\s*$|\\.\\s+~/.bashrc" },
+        { "type": "cmd_used", "value": "^\\s*up\\s*$" }
+      ],
+      "hints": [
+        "echo \"alias up='cd ..'\" >> ~/.bashrc",
+        "source ~/.bashrc",
+        "Затем проверьте: up (вы должны оказаться в /home)"
+      ],
+      "solution": "echo \"alias up='cd ..'\" >> ~/.bashrc && source ~/.bashrc && up"
+    },
+    {
+      "id": "ex5",
+      "task": "Посмотрите все переменные окружения и найдите среди них HOME, отфильтровав вывод env через grep.",
+      "setup": null,
+      "checks": [
+        { "type": "cmd_used", "value": "env.*\\|.*grep|grep.*\\|.*env" },
+        { "type": "output_contains", "value": "HOME=" }
+      ],
+      "hints": ["env | grep HOME"],
+      "solution": "env | grep HOME"
+    }
+  ]
+}

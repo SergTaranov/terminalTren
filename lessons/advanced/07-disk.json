@@ -1,0 +1,89 @@
+{
+  "id": "adv-disk",
+  "title": "Диски и память: df, du, free",
+  "level": "advanced",
+  "theory": [
+    {
+      "title": "df: свободное место на дисках",
+      "body": "`df` (disk free) показывает файловые системы: размер, занято, свободно, точку монтирования:\n\n```\n$ df -h\nFilesystem      Size  Used Avail Use% Mounted on\n/dev/sda1        20G  5.2G   14G  28% /\n```\n\nКлюч `-h` (human-readable) переводит байты в Г/М/К — без него все числа в блоках 1К."
+    },
+    {
+      "title": "du: сколько весит каталог",
+      "body": "`du` (disk usage) считает размер каталогов рекурсивно:\n\n```\ndu -sh /var/log    # только итог (-s), читаемо (-h)\ndu -h documents    # каждый подкаталог отдельно\n```\n\nСвязка «найти пожирателей места»:\n\n```\ndu -h . | sort -rh | head\n```"
+    },
+    {
+      "title": "free и lsblk",
+      "body": "`free -h` — оперативная память и swap:\n\n```\n               total        used        free      shared  buff/cache   available\nMem:           3.9Gi       1.2Gi       2.0Gi        12Mi       567Mi       2.6Gi\nSwap:          2.0Gi          0B       2.0Gi\n```\n\n`lsblk` — дерево дисков и разделов с точками монтирования. Полезно, когда непонятно, куда смонтирован диск."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Проверьте свободное место на дисках (читаемый формат).",
+      "setup": null,
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*df\\s+-h\\s*$" },
+        { "type": "output_contains", "value": "/dev/sda1" }
+      ],
+      "hints": ["df -h"],
+      "solution": "df -h"
+    },
+    {
+      "id": "ex2",
+      "task": "Узнайте итоговый размер каталога logs одной строкой (du с двумя ключами).",
+      "setup": {
+        "dirs": [{ "path": "/home/user/logs/2026" }],
+        "files": [
+          { "path": "/home/user/logs/app.log", "content": "запись\n" },
+          { "path": "/home/user/logs/2026/sep.log", "content": "запись\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*du\\s+-[a-zA-Z]*s[a-zA-Z]*h[a-zA-Z]*|du\\s+-[a-zA-Z]*h[a-zA-Z]*s[a-zA-Z]*" },
+        { "type": "output_contains", "value": "logs" }
+      ],
+      "hints": ["-s — только итог, -h — читаемый размер", "du -sh logs"],
+      "solution": "du -sh logs"
+    },
+    {
+      "id": "ex3",
+      "task": "Посмотрите размеры всех подкаталогов logs (du -h, без -s).",
+      "setup": {
+        "dirs": [{ "path": "/home/user/logs/2026" }],
+        "files": [
+          { "path": "/home/user/logs/app.log", "content": "запись\n" },
+          { "path": "/home/user/logs/2026/sep.log", "content": "запись\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*du\\s+-h\\s+logs\\s*$" },
+        { "type": "output_contains", "value": "2026" }
+      ],
+      "hints": ["du -h logs"],
+      "solution": "du -h logs"
+    },
+    {
+      "id": "ex4",
+      "task": "Проверьте оперативную память и swap (читаемый формат).",
+      "setup": null,
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*free\\s+-h\\s*$" },
+        { "type": "output_contains", "value": "Swap" }
+      ],
+      "hints": ["free -h"],
+      "solution": "free -h"
+    },
+    {
+      "id": "ex5",
+      "task": "Посмотрите список дисков и разделов (lsblk) и найдите, куда смонтирован раздел sda2.",
+      "setup": null,
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*lsblk\\s*$" },
+        { "type": "output_contains", "value": "sda2" },
+        { "type": "output_contains", "value": "/home" }
+      ],
+      "hints": ["Просто выполните lsblk"],
+      "solution": "lsblk"
+    }
+  ]
+}

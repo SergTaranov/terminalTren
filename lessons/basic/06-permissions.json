@@ -1,0 +1,100 @@
+{
+  "id": "basic-permissions",
+  "title": "Права доступа: chmod и sudo",
+  "level": "basic",
+  "theory": [
+    {
+      "title": "Что показывает ls -l",
+      "body": "```\n-rw-r--r-- 1 user user  348 Sep 30 12:00 notes.txt\n```\n\nПервый символ — тип: `-` файл, `d` каталог, `l` ссылка.\nДалее **три триады прав**:\n- `rw-` — владелец (user): читать, писать, не выполнять\n- `r--` — группа\n- `r--` — все остальные"
+    },
+    {
+      "title": "Цифры прав",
+      "body": "Каждая триада — три бита: **r=4, w=2, x=1**. Складываем:\n- `7` = rwx, `6` = rw-, `5` = r-x, `4` = r--, `0` = ---\n\nТри цифры задают права для владельца, группы и остальных:\n\n```\nchmod 644 file.txt    # rw- r-- r--  (обычный файл)\nchmod 755 script.sh   # rwx r-x r-x  (исполняемый)\nchmod 600 secret.key  # rw- --- ---  (только владелец)\nchmod 777 file        # rwx rwx rwx  (все могут всё — опасно!)\n```"
+    },
+    {
+      "title": "Символьная запись",
+      "body": "Можно менять права точечно: `кому(+-=)что`:\n- кому: `u` владелец, `g` группа, `o` остальные, `a` все\n\n```\nchmod u+x script.sh    # добавить владельцу исполнение\nchmod go-rw file       # отнять чтение/запись у группы и остальных\nchmod a=r file         # всем только чтение\n```"
+    },
+    {
+      "title": "Владелец и sudo",
+      "body": "`chown пользователь файл` меняет владельца — но только **root** имеет на это право, поэтому пишут `sudo chown`.\n\n`sudo` (superuser do) выполняет одну команду от имени root. В нашем тренажёре пароль не запрашивается.\n\nИсполнение скрипта требует права `x`: без него `./script.sh` ответит Permission denied."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Файл secret.key должен быть доступен только владельцу: чтение и запись, никому больше ничего. Установите права 600.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/secret.key", "content": "закрытый ключ\n" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_perm", "path": "/home/user/secret.key", "value": "600" }
+      ],
+      "hints": ["Три цифры: владелец, группа, остальные", "rw- = 6, --- = 0"],
+      "solution": "chmod 600 secret.key"
+    },
+    {
+      "id": "ex2",
+      "task": "Сделайте файл deploy.sh исполняемым для владельца (символьной записью).",
+      "setup": {
+        "files": [
+          { "path": "/home/user/deploy.sh", "content": "echo deploying\n" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_perm", "path": "/home/user/deploy.sh", "value": "744" }
+      ],
+      "hints": ["u+x добавляет исполнение владельцу", "chmod u+x deploy.sh"],
+      "solution": "chmod u+x deploy.sh"
+    },
+    {
+      "id": "ex3",
+      "task": "У файла notes.txt права 666 — слишком открыто. Отберите чтение и запись у группы и остальных (go-rw).",
+      "setup": {
+        "files": [
+          { "path": "/home/user/notes.txt", "content": "заметки\n", "perms": "666" }
+        ]
+      },
+      "checks": [
+        { "type": "fs_perm", "path": "/home/user/notes.txt", "value": "600" }
+      ],
+      "hints": ["chmod go-rw notes.txt"],
+      "solution": "chmod go-rw notes.txt"
+    },
+    {
+      "id": "ex4",
+      "task": "Файл data.txt заблокирован: права 000, владелец root. Сначала смените владельца на себя командой sudo chown, затем верните себе чтение.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/data.txt", "content": "важные данные\n", "perms": "000", "owner": "root" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*sudo\\s+chown\\b" },
+        { "type": "fs_perm", "path": "/home/user/data.txt", "value": "644" }
+      ],
+      "hints": [
+        "Сначала: sudo chown user data.txt",
+        "Потом: chmod 644 data.txt (право менять права даёт владение файлом — читать файл для chmod не нужно)"
+      ],
+      "solution": "sudo chown user data.txt && chmod 644 data.txt"
+    },
+    {
+      "id": "ex5",
+      "task": "Проверка запретов: у файла locked.txt права 000. Убедитесь, что cat не может его прочесть — выполните cat и посмотрите на ошибку Permission denied.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/locked.txt", "content": "секрет\n", "perms": "000" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*cat\\s+locked\\.txt" },
+        { "type": "output_contains", "value": "Permission denied" }
+      ],
+      "hints": ["Просто выполните cat locked.txt и прочитайте ошибку"],
+      "solution": "cat locked.txt"
+    }
+  ]
+}

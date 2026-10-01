@@ -1,0 +1,96 @@
+{
+  "id": "basic-navigation",
+  "title": "Навигация по файловой системе",
+  "level": "basic",
+  "theory": [
+    {
+      "title": "Где я? pwd",
+      "body": "Открыв терминал, вы всегда находитесь в каком-то **каталоге** (папке) — он называется *рабочим каталогом*.\n\nКоманда `pwd` (print working directory) печатает полный путь от корня:\n\n```\n$ pwd\n/home/user\n```\n\nПуть, начинающийся с `/`, называется **абсолютным**: он отсчитывается от корня файловой системы. `/` — это корень всего дерева каталогов."
+    },
+    {
+      "title": "Что вокруг? ls",
+      "body": "Команда `ls` (list) показывает содержимое каталога:\n\n```\n$ ls\ndocuments  downloads  notes.txt\n```\n\nПолезные ключи:\n- `ls -l` — подробный список: права, владелец, размер, дата изменения\n- `ls -a` — показать и **скрытые** файлы (их имя начинается с точки)\n- `ls -la` — и то, и другое вместе\n- `ls каталог` — посмотреть другой каталог, не переходя в него"
+    },
+    {
+      "title": "Переходы: cd",
+      "body": "Команда `cd` (change directory) меняет рабочий каталог:\n\n```\ncd /var/log      # абсолютный путь\ncd documents    # относительный — внутри текущего каталога\ncd ..            # на уровень вверх\ncd ~             # в домашний каталог (/home/user)\ncd               # тоже в домашний\ncd -             # вернуться в предыдущий каталог\n```\n\nСпециальные обозначения:\n- `.` — текущий каталог\n- `..` — родительский каталог\n- `~` — домашний каталог пользователя"
+    },
+    {
+      "title": "Дерево: tree",
+      "body": "Утилита `tree` рисует структуру каталогов наглядно:\n\n```\n$ tree documents\ndocuments\n├── report.txt\n└── archive\n    └── old.txt\n\n1 directory, 2 files\n```\n\nКлюч `-d` покажет только каталоги, `-a` — со скрытыми файлами."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Выведите абсолютный путь текущего каталога.",
+      "setup": null,
+      "checks": [{ "type": "cmd_used", "value": "^\\s*pwd\\s*$" }],
+      "hints": ["print working directory — команда из трёх букв"],
+      "solution": "pwd"
+    },
+    {
+      "id": "ex2",
+      "task": "Покажите содержимое каталога documents, не переходя в него. Убедитесь, что там есть файл report.txt.",
+      "setup": {
+        "dirs": [{ "path": "/home/user/documents/archive" }],
+        "files": [
+          { "path": "/home/user/documents/report.txt", "content": "Отчёт за квартал.\nИтоги работы отдела.\n" },
+          { "path": "/home/user/documents/archive/old.txt", "content": "старый файл\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*ls\\b.*documents" },
+        { "type": "output_contains", "value": "report.txt" }
+      ],
+      "hints": ["ls умеет принимать имя каталога как аргумент", "ls documents"],
+      "solution": "ls documents"
+    },
+    {
+      "id": "ex3",
+      "task": "Перейдите в каталог /var/log.",
+      "setup": null,
+      "checks": [{ "type": "cwd_is", "value": "/var/log" }],
+      "hints": ["cd — change directory", "Не забудьте: путь абсолютный, начинается с /"],
+      "solution": "cd /var/log"
+    },
+    {
+      "id": "ex4",
+      "task": "В каталоге documents спрятан скрытый файл. Выведите его имя командой ls.",
+      "setup": {
+        "dirs": [{ "path": "/home/user/documents" }],
+        "files": [
+          { "path": "/home/user/documents/notes.txt", "content": "заметки\n" },
+          { "path": "/home/user/documents/.secret", "content": "секрет\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*ls\\s+(-[a-zA-Z]*a[a-zA-Z]*\\s+)?documents\\s*$" },
+        { "type": "output_contains", "value": ".secret" }
+      ],
+      "hints": ["Скрытые файлы начинаются с точки", "ls показывает их только с ключом -a"],
+      "solution": "ls -a documents"
+    },
+    {
+      "id": "ex5",
+      "task": "Постройте дерево каталогов проекта project и найдите глубоко спрятанный файл app.py.",
+      "setup": {
+        "dirs": [
+          { "path": "/home/user/project/src/core" },
+          { "path": "/home/user/project/tests" }
+        ],
+        "files": [
+          { "path": "/home/user/project/README.md", "content": "# Проект\n" },
+          { "path": "/home/user/project/src/core/app.py", "content": "print('hello')\n" },
+          { "path": "/home/user/project/tests/test_app.py", "content": "def test():\n    pass\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*tree\\b" },
+        { "type": "output_contains", "value": "app.py" }
+      ],
+      "hints": ["Команда tree рисует дерево каталога", "tree project"],
+      "solution": "tree project"
+    }
+  ]
+}

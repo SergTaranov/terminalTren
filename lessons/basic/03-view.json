@@ -1,0 +1,99 @@
+{
+  "id": "basic-view",
+  "title": "Просмотр и подсчёт содержимого файлов",
+  "level": "basic",
+  "theory": [
+    {
+      "title": "cat: показать файл целиком",
+      "body": "`cat файл` (concatenate) печатает содержимое файла в терминал:\n\n```\n$ cat notes.txt\nпервая строка\nвторая строка\n```\n\nМожно склеить несколько файлов: `cat part1.txt part2.txt > all.txt`.\nКлюч `-n` нумерует строки: `cat -n file`.\n\nДля длинных файлов удобнее `less` — постраничный просмотрщик."
+    },
+    {
+      "title": "head и tail: начало и конец",
+      "body": "`head` показывает первые строки файла, `tail` — последние:\n\n```\nhead log.txt          # первые 10 строк\nhead -n 3 log.txt     # ровно 3 строки\ntail -n 5 log.txt     # последние 5\ntail -n 1 users.txt   # одна последняя строка\n```\n\nКлассический приём — вывести N-ю строку файла:\n\n```\nhead -n 20 file | tail -n 1   # 20-я строка\n```\n\n`tail -f лог` в реальной системе следит за файлом в реальном времени."
+    },
+    {
+      "title": "wc: посчитать",
+      "body": "`wc` (word count) считает строки, слова и байты:\n\n```\n$ wc text.txt\n 3  15 87 text.txt\n```\n\nЭто 3 строки, 15 слов, 87 байт. Ключи `-l`, `-w`, `-c` оставляют только одно число:\n\n```\nwc -l log.txt    # только строки\n```\n\nВ конвейерах `wc -l` — стандартный способ «сколько строк выдала команда»:\n\n```\nls | wc -l       # сколько файлов в каталоге\n```"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Выведите содержимое файла readme.txt.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/readme.txt", "content": "Это учебный файл.\nВторая строка.\nТретья строка.\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*cat\\s+.*readme\\.txt" },
+        { "type": "output_contains", "value": "Это учебный файл." }
+      ],
+      "hints": ["Самая простая команда просмотра", "cat readme.txt"],
+      "solution": "cat readme.txt"
+    },
+    {
+      "id": "ex2",
+      "task": "Выведите только первые 3 строки файла log.txt.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/log.txt", "content": "line 1: start\nline 2: load\nline 3: run\nline 4: stop\nline 5: end\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*head\\s+(-n\\s*3\\s+|-3\\s+)log\\.txt" },
+        { "type": "output_contains", "value": "line 3: run" }
+      ],
+      "hints": ["head с ключом -n задаёт число строк", "head -n 3 log.txt"],
+      "solution": "head -n 3 log.txt"
+    },
+    {
+      "id": "ex3",
+      "task": "Выведите последнюю строку файла log.txt.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/log.txt", "content": "alpha\nbeta\ngamma\ndelta\nomega — последняя\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*tail\\s+(-n\\s*1\\s+|-1\\s+)log\\.txt" },
+        { "type": "output_contains", "value": "omega — последняя" }
+      ],
+      "hints": ["tail показывает конец файла", "tail -n 1 log.txt"],
+      "solution": "tail -n 1 log.txt"
+    },
+    {
+      "id": "ex4",
+      "task": "Посчитайте количество строк в файле access.log и убедитесь, что их ровно 8.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/access.log", "content": "GET /\nGET /about\nPOST /login\nGET /docs\nGET /help\nPOST /api\nGET /stats\nGET /exit\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*wc\\s+(-l\\s+).*access\\.log" },
+        { "type": "output_contains", "value": "8 access.log" }
+      ],
+      "hints": ["wc с ключом -l считает строки", "wc -l access.log"],
+      "solution": "wc -l access.log"
+    },
+    {
+      "id": "ex5",
+      "task": "Комбинированный приём: выведите 4-ю строку файла data.txt (используйте конвейер head + tail).",
+      "setup": {
+        "files": [
+          { "path": "/home/user/data.txt", "content": "один\ndва\nтри\nчетыре\nпять\nшесть\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "head.*\\|.*tail|tail.*\\|.*head" },
+        { "type": "output_contains", "value": "четыре" }
+      ],
+      "hints": [
+        "head -n 4 | tail -n 1 оставит только последнюю из первых четырёх строк",
+        "head -n 4 data.txt | tail -n 1"
+      ],
+      "solution": "head -n 4 data.txt | tail -n 1"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+# Binary
+terminalTren.exe
+terminalTren
+*.exe
+
+# Test artifacts
+*.test
+coverage.out
+
+# Working notes / session artifacts
+lessons-review.md
+.zcode/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store

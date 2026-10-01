@@ -1,0 +1,100 @@
+{
+  "id": "basic-grep",
+  "title": "Поиск по содержимому: grep",
+  "level": "basic",
+  "theory": [
+    {
+      "title": "grep — строки, где есть шаблон",
+      "body": "`grep шаблон файл` печатает строки файла, содержащие шаблон:\n\n```\n$ grep error app.log\n2026-09-01 error: диск заполнен\n2026-09-02 error: таймаут запроса\n```\n\nШаблон — это **регулярное выражение**: `grep 'err.r'` найдёт error, err0r и т.д."
+    },
+    {
+      "title": "Полезные ключи",
+      "body": "- `-i` — не учитывать регистр (Error = error)\n- `-v` — **инвертировать**: строки БЕЗ шаблона\n- `-n` — показывать номера строк\n- `-c` — только посчитать совпадения\n- `-w` — совпадение только целым словом\n- `-r каталог` — рекурсивно по всем файлам каталога\n- `-l` — только имена файлов, где есть совпадения\n\nКоды возврата: 0 — совпадения есть, 1 — нет. Поэтому grep часто используют в условиях скриптов."
+    },
+    {
+      "title": "grep в конвейере",
+      "body": "grep отлично работает в конвейере, фильтруя чужой вывод:\n\n```\nps aux | grep nginx\ncat log | grep -i warning\nls -l | grep \"^d\"      # только каталоги\n```\n\nКомбинация с подсчётом: `grep -c error log` или `grep error log | wc -l`."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex1",
+      "task": "Выведите все строки файла app.log, содержащие слово error.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/app.log", "content": "info: сервис запущен\nerror: диск заполнен\ninfo: запрос обработан\nerror: таймаут запроса\ninfo: завершение\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*grep\\b.*error\\s+app\\.log" },
+        { "type": "output_contains", "value": "диск заполнен" }
+      ],
+      "hints": ["grep шаблон файл", "grep error app.log"],
+      "solution": "grep error app.log"
+    },
+    {
+      "id": "ex2",
+      "task": "Посчитайте количество строк со словом warning в файле server.log (без учёта регистра — там есть и WARNING, и Warning).",
+      "setup": {
+        "files": [
+          { "path": "/home/user/server.log", "content": "WARNING: перегрев\nok\nWarning: память\nok\nwarning: сеть\nok\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*grep\\s+-[a-zA-Z]*c[a-zA-Z]*i[a-zA-Z]*|grep\\s+-[a-zA-Z]*i[a-zA-Z]*c[a-zA-Z]*" },
+        { "type": "output_contains", "value": "3\n" }
+      ],
+      "hints": ["Два ключа вместе: -ci", "grep -ci warning server.log"],
+      "solution": "grep -ci warning server.log"
+    },
+    {
+      "id": "ex3",
+      "task": "Выведите строки файла app.log, которые НЕ содержат слово info.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/app.log", "content": "info: старт\nerror: сбой\ninfo: работа\nerror: повтор\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*grep\\s+-[a-zA-Z]*v[a-zA-Z]*\\s+info\\s+app\\.log" },
+        { "type": "output_contains", "value": "сбой" }
+      ],
+      "hints": ["Ключ -v инвертирует выборку"],
+      "solution": "grep -v info app.log"
+    },
+    {
+      "id": "ex4",
+      "task": "Найдите в каком файле каталога logs упоминается слово outage — выведите имя файла (имена).",
+      "setup": {
+        "dirs": [{ "path": "/home/user/logs" }],
+        "files": [
+          { "path": "/home/user/logs/monday.log", "content": "всё хорошо\noutage 5 минут\n" },
+          { "path": "/home/user/logs/tuesday.log", "content": "без происшествий\n" },
+          { "path": "/home/user/logs/wednesday.log", "content": "outage 2 минуты\nпрочее\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "^\\s*grep\\s+-[a-zA-Z]*r[a-zA-Z]*l[a-zA-Z]*|grep\\s+-[a-zA-Z]*l[a-zA-Z]*r[a-zA-Z]*" },
+        { "type": "output_contains", "value": "monday.log" },
+        { "type": "output_contains", "value": "wednesday.log" }
+      ],
+      "hints": ["Рекурсивный поиск по каталогу: -r, только имена файлов: -l", "grep -rl outage logs"],
+      "solution": "grep -rl outage logs"
+    },
+    {
+      "id": "ex5",
+      "task": "Комбинируйте: найдите строки с error в app.log и посчитайте их количество, используя конвейер grep | wc -l.",
+      "setup": {
+        "files": [
+          { "path": "/home/user/app.log", "content": "error один\nok\nerror два\nok\nerror три\n" }
+        ]
+      },
+      "checks": [
+        { "type": "cmd_used", "value": "grep.*\\|.*wc\\s+-l" },
+        { "type": "output_contains", "value": "3" }
+      ],
+      "hints": ["grep error app.log | wc -l"],
+      "solution": "grep error app.log | wc -l"
+    }
+  ]
+}
