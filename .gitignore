@@ -3,6 +3,9 @@ terminalTren.exe
 terminalTren
 *.exe
 
+# Release artifacts
+dist/
+
 # Test artifacts
 *.test
 coverage.out
